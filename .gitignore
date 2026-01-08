@@ -1,0 +1,58 @@
+#environment
+.vscode
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Media
+*.jpg
+*.png
+*.jpeg
+*.avi
+*.mp4
+*.pcd
+nav2_localization_adapter/map/*.pgm
+nav2_localization_adapter/map/*.yaml
+!nav2_localization_adapter/map/garden.pgm
+!nav2_localization_adapter/map/garden.yaml
+
+# Executables
+*.exe
+*.out
+*.app
+bin
+build
+lib
+/data/video/
+/data/pic/
+/old_data/pic/
+/corefile
+temp
+cmake-build-debug
+.idea
+log

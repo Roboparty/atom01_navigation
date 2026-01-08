@@ -1,0 +1,273 @@
+# Nav2 parameters optimized for 2.5D humanoid robot navigation
+# This configuration uses the TerrainLayer plugin for slope/stair detection
+# Adjust costmap layers and robot footprint as needed.
+
+amcl:
+  ros__parameters:
+    use_sim_time: False  # unused but required by bringup defaults
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: False
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: robot_0/odometry
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    wait_for_service_timeout: 1000
+    navigators: ['navigate_to_pose', 'navigate_through_poses']
+    navigate_to_pose:
+      plugin: "nav2_navigator/NavigateToPoseNavigator"
+    navigate_through_poses:
+      plugin: "nav2_navigator/NavigateThroughPosesNavigator"
+
+controller_server:
+  ros__parameters:
+    use_sim_time: False
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.3
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["simple_goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+
+    simple_goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      stateful: True
+
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: False
+      min_vel_x: 0.0
+      min_vel_y: 0.0
+      max_vel_x: 0.5
+      max_vel_y: 0.0
+      max_vel_theta: 1.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_y: 0.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.0
+      decel_lim_y: 0.0
+      decel_lim_theta: -2.0
+      vx_samples: 20
+      vy_samples: 0
+      vtheta_samples: 40
+      sim_time: 2.0
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.2
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      rotate_to_goal_heading: true
+      critics:
+        - RotateToGoal
+        - PathAlign
+        - PathDist
+        - GoalDist
+        - ObstacleFootprint
+      ObstacleFootprint.scale: 0.01
+      PathAlign.scale: 32.0
+      PathDist.scale: 20.0
+      GoalDist.scale: 24.0
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: True
+    planner_plugins: ["GridBased"]
+
+    GridBased:
+      plugin: "nav2_smac_planner/SmacPlannerHybrid"
+      motion_model_for_search: "REEDS_SHEPP"
+      minimum_turning_radius: 0.15
+      reverse_penalty: 5.0
+      downsampling_factor: 1
+      angle_quantization_bins: 72
+      analytic_expansion_ratio: 3.5
+      tolerance: 0.25
+      allow_unknown: false
+      max_planning_time: 5.0
+      cost_travel_multiplier: 2.0
+      change_penalty: 0.2
+      non_straight_penalty: 1.3
+      retrospective_penalty: 0.025
+      lookup_table_size: 20.0
+      cache_obstacle_heuristic: false
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: False
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: False
+    global_frame: map
+    robot_base_frame: base_link
+    odom_frame: odom
+    default_behavior_tree: "$(find-pkg-share nav2_bt_navigator)/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    error_code_names:
+      - compute_path_error_code
+      - follow_path_error_code
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: False
+    loop_rate: 5
+    stop_on_failure: false
+
+#==========================================================================
+# LOCAL COSTMAP - Uses TerrainLayer for 2.5D navigation
+#==========================================================================
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: False
+      global_frame: odom
+      robot_base_frame: base_link
+      update_frequency: 10.0
+      publish_frequency: 10.0
+      rolling_window: true
+      width: 10
+      height: 10
+      resolution: 0.05
+      robot_radius: 0.25
+      
+      # Use TerrainLayer instead of VoxelLayer for 2.5D navigation
+      plugins: ["terrain_layer", "inflation_layer"]
+      
+      #----------------------------------------------------------------------
+      # TerrainLayer - Analyzes 3D point cloud for slope/stair detection
+      #----------------------------------------------------------------------
+      terrain_layer:
+        plugin: "terrain_costmap_plugin/TerrainLayer"
+        enabled: true
+        
+        # Point cloud topic from LiDAR
+        pointcloud_topic: /robot_0/cloud_registered_world
+        
+        # TF frames
+        global_frame: odom
+        robot_base_frame: base_link
+        
+        # Robot physical capabilities - ADJUST FOR YOUR ROBOT
+        max_slope_angle: 25.0      # Maximum walkable slope (degrees)
+        max_step_height: 0.15      # Maximum step height (meters)
+        min_step_height: 0.03      # Minimum height to consider as step (meters)
+        robot_height: 0.8          # Robot height for overhead detection (meters)
+        robot_radius: 0.25         # Robot footprint radius (meters)
+        
+        # Terrain analysis parameters
+        height_resolution: 0.05    # Height grid resolution (meters)
+        min_points_per_cell: 3.0   # Minimum points per cell
+        observation_range: 5.0     # Maximum observation range (meters)
+        observation_height_min: -0.5   # Min height relative to robot (meters)
+        observation_height_max: 2.0    # Max height relative to robot (meters)
+        terrain_analysis_radius: 0.15  # Local plane fitting radius (meters)
+        
+        # Cost thresholds
+        lethal_threshold: 0.2      # Traversability below this = LETHAL
+        inscribed_threshold: 0.5   # Traversability below this = INSCRIBED
+        use_gradient_cost: true    # Use gradient costs for smooth planning
+        mark_unknown_as_free: false  # Treat unknown areas conservatively
+        cloud_timeout: 1.0         # Point cloud timeout (seconds)
+        
+        # Traversability weights (should sum to 1.0)
+        slope_weight: 0.4
+        step_weight: 0.4
+        roughness_weight: 0.2
+        
+        # Additional thresholds
+        max_roughness: 0.05           # Maximum acceptable roughness (meters)
+        negative_obstacle_threshold: -0.3  # Drop-off threshold (meters)
+      
+      #----------------------------------------------------------------------
+      # Inflation Layer - Inflate obstacles for safe path planning
+      #----------------------------------------------------------------------
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.40
+
+#==========================================================================
+# GLOBAL COSTMAP - Uses static map layer
+#==========================================================================
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: False
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      rolling_window: false
+      width: 50
+      height: 50
+      resolution: 0.05
+      track_unknown_space: true
+      footprint: "[[0.2, 0.2], [0.2, -0.2], [-0.2, -0.2], [-0.2, 0.2]]"
+      footprint_padding: 0.01
+      plugins: ["static_layer", "terrain_layer", "inflation_layer"]
+      
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      
+      # TerrainLayer for global costmap (lower update rate)
+      terrain_layer:
+        plugin: "terrain_costmap_plugin/TerrainLayer"
+        enabled: true
+        pointcloud_topic: /robot_0/cloud_registered_world
+        global_frame: map
+        robot_base_frame: base_link
+        max_slope_angle: 25.0
+        max_step_height: 0.15
+        min_step_height: 0.03
+        robot_height: 0.8
+        robot_radius: 0.25
+        height_resolution: 0.05
+        min_points_per_cell: 3.0
+        observation_range: 10.0
+        observation_height_min: -0.5
+        observation_height_max: 2.0
+        terrain_analysis_radius: 0.15
+        lethal_threshold: 0.2
+        inscribed_threshold: 0.5
+        use_gradient_cost: true
+        mark_unknown_as_free: false
+        cloud_timeout: 2.0
+        slope_weight: 0.4
+        step_weight: 0.4
+        roughness_weight: 0.2
+        max_roughness: 0.05
+        negative_obstacle_threshold: -0.3
+      
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.40
+
+map_server:
+  ros__parameters:
+    use_sim_time: False
+    yaml_filename: "/home/zyq/atom01/atom01_navigation/src/robots_localization_ros2/map/roboparty4.yaml"
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: False
+    autostart: True
+    node_names: ["controller_server", "planner_server", "bt_navigator", "behavior_server", "waypoint_follower", "smoother_server", "map_server"]

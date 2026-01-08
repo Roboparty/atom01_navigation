@@ -1,0 +1,6 @@
+[submodule "robots_localization_ros2"]
+	path = robots_localization_ros2
+	url = https://github.com/Luo1imasi/robots_localization_ros2.git
+[submodule "nlink_parser_ros2"]
+	path = nlink_parser_ros2
+	url = https://github.com/Luo1imasi/nlink_parser_ros2.git

@@ -1,0 +1,345 @@
+# Nav2 parameters for navigation without AMCL (external localization)
+# Adjust costmap layers and robot footprint as needed.
+
+amcl:
+  ros__parameters:
+    use_sim_time: False  # unused but required by bringup defaults
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: False
+    global_frame: map
+    robot_base_frame: base_link
+    # odom_frame: odom
+    odom_topic: robot_0/odometry
+    # default_bt_xml_filename: "$(find-pkg-share nav2_bt_navigator)/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    wait_for_service_timeout: 1000
+    navigators: ['navigate_to_pose', 'navigate_through_poses']
+    navigate_to_pose:
+      plugin: "nav2_navigator/NavigateToPoseNavigator"
+    navigate_through_poses:
+      plugin: "nav2_navigator/NavigateThroughPosesNavigator"
+    # plugin_lib_names:
+    #   - nav2_compute_path_to_pose_action_bt_node
+    #   - nav2_follow_path_action_bt_node
+    #   - nav2_back_up_action_bt_node
+    #   - nav2_spin_action_bt_node
+    #   - nav2_wait_action_bt_node
+    #   - nav2_assisted_teleop_action_bt_node
+    #   - nav2_clear_costmap_service_bt_node
+    #   - nav2_is_stuck_condition_bt_node
+    #   - nav2_goal_reached_condition_bt_node
+    #   - nav2_goal_updated_condition_bt_node
+    #   - nav2_initial_pose_received_condition_bt_node
+    #   - nav2_reinitialize_global_localization_service_bt_node
+    #   - nav2_rate_controller_bt_node
+    #   - nav2_distance_controller_bt_node
+    #   - nav2_speed_controller_bt_node
+    #   - nav2_truncate_path_action_bt_node
+    #   - nav2_goal_checker_selector_bt_node
+    #   - nav2_controller_selector_bt_node
+    #   - nav2_planner_selector_bt_node
+    #   - nav2_smoother_selector_bt_node
+    #   - nav2_controller_cancel_bt_node
+    #   - nav2_path_longer_on_approach_bt_node
+    #   - nav2_recovery_node_bt_node
+    #   - nav2_single_trigger_bt_node
+    #   - nav2_pipeline_sequence_bt_node
+    #   - nav2_round_robin_node_bt_node
+    #   - nav2_transform_available_condition_bt_node
+    #   - nav2_time_expired_condition_bt_node
+    #   - nav2_path_expiring_timer_condition
+    #   - nav2_distance_traveled_condition_bt_node
+    #   # - nav2_tf_listener_bt_node
+    #   - nav2_wait_cancel_bt_node
+    #   - nav2_assisted_teleop_cancel_bt_node
+    #   - nav2_back_up_cancel_bt_node
+    #   - nav2_spin_cancel_bt_node
+    #   - nav2_wait_cancel_bt_node
+    #   - nav2_clear_costmap_service_cancel_bt_node
+    #   - nav2_is_battery_low_condition_bt_node
+
+
+controller_server:
+  ros__parameters:
+    # controller server parameters (see Controller Server for more info)
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"] # progress_checker_plugin: "progress_checker" For Humble and older
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      stateful: True
+    # DWB controller parameters
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: True
+      min_vel_x: 0.0
+      min_vel_y: 0.0
+      max_vel_x: 2.0
+      max_vel_y: 0.0
+      max_vel_theta: 1.05
+      min_speed_xy: 0.0
+      max_speed_xy: 2.0
+      min_speed_theta: 0.0
+      acc_lim_x: 3.0
+      acc_lim_y: 0.0
+      acc_lim_theta: 3.2
+      decel_lim_x: -3.0
+      decel_lim_y: 0.0
+      decel_lim_theta: -3.2
+      vx_samples: 24
+      vy_samples: 1
+      vtheta_samples: 24
+      sim_time: 1.7
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      xy_goal_tolerance: 0.25
+      path_length_tolerance: 1.0
+      trans_stopped_velocity: 0.25
+      short_circuit_trajectory_evaluation: True
+      limit_vel_cmd_in_traj: False
+      stateful: True
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 0.02
+      PathAlign.scale: 32.0
+      GoalAlign.scale: 24.0
+      PathAlign.forward_point_distance: 0.1
+      GoalAlign.forward_point_distance: 0.1
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: False
+    planner_plugins: ["GridBased"]  
+
+    GridBased:
+      plugin: "nav2_smac_planner/SmacPlannerHybrid"
+      
+      # --- 核心：足式机器人运动学参数 ---
+      motion_model_for_search: "REEDS_SHEPP"  # 关键！设置为 REEDS_SHEPP 允许倒车。DUBINS 只能前进。
+      minimum_turning_radius: 0.5  # (单位:米) 关键！
+                                    # 人形机器人比较灵活，可以走更急的弯。
+                                    # 注意：不要设为 0.0，Hybrid 算法不喜欢 0 半径，计算会极其缓慢。
+                                    # 这个值越小，计算量越大；如果设得太大，狭窄路口会过不去。
+      reverse_penalty: 5.0          # 倒车惩罚权重。
+                                    # 设为 1.0 表示倒车和前进代价一样；
+                                    # 设为 > 2.0 会让机器人尽量不倒车，除非万不得已。
+                                    # 设为 1000.0 几乎就是禁止倒车（除非死路一条）
+      
+      # --- 搜索与精度 ---
+      downsampling_factor: 1        # 关键！设为 1 表示使用原始地图分辨率（通常0.05m）。
+                                    # 足式机器人需要在杂乱环境中穿梭，降采样可能导致把可通行的狭缝当成障碍。
+      angle_quantization_bins: 72   # 将360度切分为72份（每份5度）。
+                                    # 越高越能精准地“切”入窄门，但计算更慢。72是很好的平衡点。
+      analytic_expansion_ratio: 3.5 # 启发式搜索的加速比率，默认3.5即可。
+      
+      # --- 路径质量优化 ---
+      tolerance: 0.25               # 允许目标点附近的误差范围
+      allow_unknown: true           # 是否允许规划进未知区域（通常 False）
+      max_planning_time: 5.0        # 最大规划时间
+      cost_penalty: 2.0             # 代价地图的惩罚权重 (costmap penalty)
+      
+      # --- 平滑惩罚 (Smoothness) ---
+      change_penalty: 0.5           # “打舵”惩罚。防止路径蛇形走位。
+      non_straight_penalty: 2.0     # 非直线惩罚。鼓励走直线，毕竟人形走直线最稳
+      retrospective_penalty: 0.025  # 回溯惩罚
+      
+      # --- 碰撞检测优化 ---
+      lookup_table_size: 20.0       # 查找表大小，一般默认20即可
+      cache_obstacle_heuristic: false # 如果地图也是动态更新的，建议设为 false
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: False
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: False
+    global_frame: map
+    robot_base_frame: base_link
+    odom_frame: odom
+    default_behavior_tree: "$(find-pkg-share nav2_bt_navigator)/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    # plugin_lib_names:
+    #   - nav2_spin_action_bt_node
+    #   - nav2_back_up_action_bt_node
+    #   - nav2_wait_action_bt_node
+    #   - nav2_assisted_teleop_action_bt_node
+    #   - nav2_clear_costmap_service_bt_node
+    #   - nav2_is_stuck_condition_bt_node
+    #   - nav2_goal_reached_condition_bt_node
+    #   - nav2_goal_updated_condition_bt_node
+    #   - nav2_initial_pose_received_condition_bt_node
+    #   - nav2_reinitialize_global_localization_service_bt_node
+    #   - nav2_rate_controller_bt_node
+    #   - nav2_distance_controller_bt_node
+    #   - nav2_speed_controller_bt_node
+    #   - nav2_truncate_path_action_bt_node
+    #   - nav2_goal_checker_selector_bt_node
+    #   - nav2_controller_selector_bt_node
+    #   - nav2_planner_selector_bt_node
+    #   - nav2_smoother_selector_bt_node
+    #   - nav2_controller_cancel_bt_node
+    #   - nav2_path_longer_on_approach_bt_node
+    #   - nav2_recovery_node_bt_node
+    #   - nav2_single_trigger_bt_node
+    #   - nav2_pipeline_sequence_bt_node
+    #   - nav2_round_robin_node_bt_node
+    #   - nav2_transform_available_condition_bt_node
+    #   - nav2_time_expired_condition_bt_node
+    #   - nav2_path_expiring_timer_condition
+    #   - nav2_distance_traveled_condition_bt_node
+    #   - nav2_tf_listener_bt_node
+    #   - nav2_wait_cancel_bt_node
+    #   - nav2_assisted_teleop_cancel_bt_node
+    #   - nav2_back_up_cancel_bt_node
+    #   - nav2_spin_cancel_bt_node
+    #   - nav2_wait_cancel_bt_node
+    #   - nav2_clear_costmap_service_cancel_bt_node
+    #   - nav2_is_battery_low_condition_bt_node
+    error_code_names:
+      - compute_path_error_code
+      - follow_path_error_code
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: False
+    loop_rate: 5
+    stop_on_failure: false
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: False
+      global_frame: odom
+      robot_base_frame: base_link
+      update_frequency: 10.0
+      publish_frequency: 10.0
+      rolling_window: true
+      width: 30            # 增加到30m以适配更长的预测距离
+      height: 30           # 增加到30m
+      resolution: 0.05
+      # footprint: "[[0.2, 0.2], [0.2, -0.2], [-0.2, -0.2], [-0.2, 0.2]]"
+      # footprint_padding: 0.01
+      robot_radius: 0.25
+      plugins: ["voxel_layer", "inflation_layer"]
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        max_obstacle_height: 1.2
+        origin_z: 0.0
+        z_voxels: 16
+        z_resolution: 0.05
+        unknown_threshold: 15
+        mark_threshold: 0
+        observation_sources: pointcloud
+        pointcloud:
+          topic: /robot_0/cloud_registered_world
+          max_obstacle_height: 1.2
+          min_obstacle_height: 0.35
+          obstacle_max_range: 10.0
+          obstacle_min_range: 0.0
+          raytrace_max_range: 11.0
+          raytrace_min_range: 0.05
+          clearing: true
+          marking: true
+          data_type: PointCloud2
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 1.5   # 降低此值，代价下降更慢，机器人更远离障碍物
+        inflation_radius: 1.50      # 增大膨胀半径，室外环境更安全
+
+  # Static layer omitted because localization is external; enable if you need map obstacles.
+
+  # Critic params for DWB (if needed, set here)
+
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: False
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 5.0
+      publish_frequency: 5.0
+      rolling_window: false
+      width: 50
+      height: 50
+      resolution: 0.05
+      track_unknown_space: true
+      footprint: "[[0.2, 0.2], [0.2, -0.2], [-0.2, -0.2], [-0.2, 0.2]]"
+      footprint_padding: 0.01
+      plugins: ["static_layer", "inflation_layer", "voxel_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 1.5   # 降低此值，代价下降更慢，机器人更远离障碍物
+        inflation_radius: 1.50      # 增大膨胀半径，室外环境更安全
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        max_obstacle_height: 1.2
+        origin_z: 0.0
+        z_voxels: 16
+        z_resolution: 0.05
+        unknown_threshold: 15
+        mark_threshold: 0
+        observation_sources: pointcloud
+        pointcloud:
+          topic: /robot_0/cloud_registered_world
+          max_obstacle_height: 1.2
+          min_obstacle_height: 0.35
+          obstacle_max_range: 10.0
+          obstacle_min_range: 0.0
+          raytrace_max_range: 11.0
+          raytrace_min_range: 0.05
+          clearing: true
+          marking: true
+          data_type: PointCloud2
+
+map_server:
+  ros__parameters:
+    use_sim_time: False
+    yaml_filename: "/home/zyq/atom01/atom01_navigation/src/robots_localization_ros2/map/roboparty4.yaml"
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: False
+    smoothing_frequency: 20.0
+    scale_velocities: False
+    feedback: "OPEN_LOOP"
+    max_velocity: [3.5, 0.0, 1.5]
+    min_velocity: [-0.2, 0.0, -1.5]
+    max_accel: [3.0, 0.0, 3.2]
+    max_decel: [-3.0, 0.0, -3.2]
+    odom_topic: "odom"
+    odom_duration: 0.2
+    deadband_velocity: [0.0, 0.0, 0.0]
+    velocity_timeout: 1.0
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: False
+    autostart: True
+    node_names: ["controller_server", "planner_server", "bt_navigator", "behavior_server", "waypoint_follower", "smoother_server", "map_server"]
