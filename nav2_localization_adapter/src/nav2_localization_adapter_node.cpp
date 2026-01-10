@@ -22,7 +22,7 @@ public:
         this->declare_parameter<std::string>("map_frame", "map");
         this->declare_parameter<std::string>("odom_frame", "odom");
         this->declare_parameter<std::string>("base_frame", "base_link");
-        this->declare_parameter<bool>("publish_amcl_pose", true);
+        this->declare_parameter<bool>("publish_pose", true);
         this->declare_parameter<double>("tf_rate_hz", 10.0);  // 10Hz 发布 map->odom
 
         // Get parameters
@@ -30,7 +30,7 @@ public:
         map_frame_ = this->get_parameter("map_frame").as_string();
         odom_frame_ = this->get_parameter("odom_frame").as_string();
         base_frame_ = this->get_parameter("base_frame").as_string();
-        publish_amcl_pose_ = this->get_parameter("publish_amcl_pose").as_bool();
+        publish_pose_ = this->get_parameter("publish_pose").as_bool();
         tf_rate_hz_ = this->get_parameter("tf_rate_hz").as_double();
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -40,10 +40,10 @@ public:
             odom_topic_, 10,
             std::bind(&Nav2LocalizationAdapter::odomCallback, this, std::placeholders::_1));
 
-        // Publisher for amcl_pose (Nav2 compatible)
-        if (publish_amcl_pose_) {
-            amcl_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-                "amcl_pose", 10);
+        // Publisher for pose (Nav2 compatible)
+        if (publish_pose_) {
+            pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+                "pose", 10);
         }
 
         // Prepare static map->odom transform (identity) and publish at fixed rate
@@ -72,9 +72,9 @@ private:
         // Publish odom -> base_link using the odometry pose (odom frame)
         publishOdomToBaseTf(msg);
 
-        // Publish amcl_pose (pose in map frame)
-        if (publish_amcl_pose_) {
-            publishAmclPose(msg);
+        // Publish pose (pose in map frame)
+        if (publish_pose_) {
+            publishPose(msg);
         }
     }
 
@@ -84,13 +84,13 @@ private:
         tf_broadcaster_->sendTransform(static_transform_);
     }
 
-    void publishAmclPose(const nav_msgs::msg::Odometry::SharedPtr& odom_msg)
+    void publishPose(const nav_msgs::msg::Odometry::SharedPtr& odom_msg)
     {
         geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
         pose_msg.header.stamp = odom_msg->header.stamp;
         pose_msg.header.frame_id = map_frame_;
         pose_msg.pose = odom_msg->pose;
-        amcl_pose_pub_->publish(pose_msg);
+        pose_pub_->publish(pose_msg);
     }
 
     void publishOdomToBaseTf(const nav_msgs::msg::Odometry::SharedPtr& odom_msg)
@@ -111,7 +111,7 @@ private:
     std::string map_frame_;
     std::string odom_frame_;
     std::string base_frame_;
-    bool publish_amcl_pose_;
+    bool publish_pose_;
     double tf_rate_hz_;
 
     // TF
@@ -121,7 +121,7 @@ private:
 
     // Subscribers and Publishers
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr amcl_pose_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
 };
 
 int main(int argc, char** argv)

@@ -1,9 +1,17 @@
 # atom01_navigation
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![ROS 2](https://img.shields.io/badge/ROS-2-blue.svg)](https://docs.ros.org/en/humble/index.html)
+[![ROS 2](https://img.shields.io/badge/ROS-2-Humble-blue.svg)](https://docs.ros.org/en/humble/index.html)
+[![Nav2](https://img.shields.io/badge/Nav2-Enabled-success.svg)](https://navigation.ros.org/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-orange.svg)](https://releases.ubuntu.com/22.04/)
+[![C++](https://img.shields.io/badge/C%2B%2B-14%2F17-blue.svg)](https://isocpp.org/)
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![Build](https://img.shields.io/badge/Build-Colcon-orange.svg)](https://colcon.readthedocs.io/en/released/)
+[![PCL](https://img.shields.io/badge/PCL-1.12-green.svg)](https://pointclouds.org/)
+[![Open3D](https://img.shields.io/badge/Open3D-0.17.0-blue.svg)](http://www.open3d.org/)
+[![NumPy](https://img.shields.io/badge/NumPy-1.21-blue.svg)](https://numpy.org/)
 
-An advanced autonomous navigation system for mobile robots, integrating high-precision localization with ROS 2 Navigation Stack (Nav2).
+An autonomous navigation system for mobile robots, integrating high-precision localization with ROS 2 Navigation Stack (Nav2).
 
 [English](README.md) | [中文](README_CN.md)
 
@@ -22,14 +30,14 @@ An advanced autonomous navigation system for mobile robots, integrating high-pre
 
 ## Overview
 
-The ATOM01 Navigation System is a comprehensive robotics navigation solution built on ROS 2. It combines 3D LiDAR-based SLAM, UWB positioning, and inertial measurement for robust **3D localization** in complex environments. The system seamlessly integrates with the Nav2 navigation stack by bridging 3D poses to 2D navigation requirements, enabling autonomous **2D map navigation** for mobile robots.
+The ATOM01 Navigation System is a comprehensive robotics navigation solution built on ROS 2. It combines 3D LiDAR-based SLAM, UWB positioning, and inertial measurement for robust **3D localization and mapping** in complex environments. The system seamlessly integrates with the Nav2 navigation stack by bridging 3D poses to 2D navigation requirements, enabling autonomous **2D map navigation** for mobile robots.
 
 **Creator**: Yongqi Zhang
 **Contact**: 1205041724@qq.com
 
 ## Features
 
-- **High-Precision Localization**: Based on FAST-LIO 2 algorithm for real-time LiDAR-Inertial odometry
+- **High-Precision Localization and Mapping**: Based on FAST-LIO 2 algorithm for real-time 3D mapping and LiDAR-Inertial odometry
 - **Multi-Sensor Fusion**: Integrates Livox LiDAR, IMU, and UWB positioning systems
 - **Nav2 Integration**: Seamless adapter for ROS 2 Navigation Stack compatibility
 - **Real-time Performance**: Optimized for embedded systems and resource-constrained platforms
@@ -68,6 +76,7 @@ The core localization package based on FAST-LIO 2, providing high-precision stat
 
 **Key Features:**
 - Real-time LiDAR-Inertial Odometry (LIO)
+- 3D Point Cloud Mapping
 - ikd-Tree based point cloud management
 - Global elevation map generation
 - PCD map loading and localization
@@ -76,7 +85,7 @@ The core localization package based on FAST-LIO 2, providing high-precision stat
 - `robots_localization_node`: Main localization node
 
 **Topics:**
-- Subscribes: `/livox/lidar`, `/livox/imu`, `/nlink_linktrack_nodeframe5` (UWB)
+- Subscribes: `/livox/lidar`, `/livox/imu`
 - Publishes: `/odometry`, `/current_pose`, `/map`, `/path`
 
 **For more details, please refer to:** [robots_localization_ros2/README.md](robots_localization_ros2/README.md)
@@ -96,7 +105,7 @@ Bridge adapter connecting `robots_localization` (EKF) output to `Nav2` navigatio
 
 **Topics:**
 - Subscribes: `/odometry` (from robots_localization)
-- Publishes: `/amcl_pose`, TF transforms (map→odom)
+- Publishes: `/pose`, TF transforms (map→odom)
 
 **For more details, please refer to:** [nav2_localization_adapter/README.md](nav2_localization_adapter/README.md)
 
@@ -108,6 +117,10 @@ NLink UWB positioning system interface and message definitions. Includes protoco
 - **nlink_parser_ros2**: Main parser for NLink protocol
 - **nlink_message**: Custom message definitions for NLink devices
 - **serial**: Cross-platform serial port communication library
+
+**Main Nodes:**
+- `linktrack`: LinkTrack UWB sensor driver node
+- `tofsense`: TOFSense laser ranging sensor driver node
 
 **For more details, please refer to:** [nlink_parser_ros2/README.md](nlink_parser_ros2/README.md)
 
@@ -146,13 +159,13 @@ sudo apt install -y \
     ccache
 ```
 
-#### Python Dependencies (nav2_localization_adapter)
+#### Python Dependencies
 
 ```bash
-pip install open3d numpy pyyaml
+pip install open3d numpy pyyaml Pillow scipy
 ```
 
-#### Third-Party Libraries (robots_localization_ros2)
+#### Third-Party Libraries
 
 **Sophus** (Recommended 1.22.10)
 ```bash
@@ -204,23 +217,14 @@ Use the `--recursive` parameter to automatically clone submodules:
 cd ~/
 mkdir -p atom01_ws/src
 cd atom01_ws/src
-git clone --recursive <repository-url> atom01_navigation
+git clone --recursive https://github.com/Roboparty/atom01_navigation.git
 ```
 
-### 2. Install Dependencies
+### 2. Build the Workspace
 
 ```bash
 cd ~/atom01_ws
-rosdep install --from-paths src --ignore-src -r -y
-```
-
-### 3. Build the Workspace
-
-Recommended build method using Ninja:
-
-```bash
-cd ~/atom01_ws
-colcon build --symlink-install --cmake-args -G Ninja
+colcon build --symlink-install
 ```
 
 ## Usage
@@ -244,7 +248,8 @@ For detailed instructions, please refer to [robots_localization_ros2/README.md](
 3. Launch nodes:
    ```bash
    # Mapping Mode
-   ros2 launch robots_localization_ros2 mapping.launch.py
+   # Note: Mapping and localization use the same launch file, distinguished by the mapping_en parameter in config
+   ros2 launch robots_localization_ros2 localization.launch.py
    
    # Or Localization Mode
    ros2 launch robots_localization_ros2 localization.launch.py

@@ -1,9 +1,17 @@
-# atom01_navigation
+#  atom01_navigation
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![ROS 2](https://img.shields.io/badge/ROS-2-blue.svg)](https://docs.ros.org/en/humble/index.html)
+[![ROS 2](https://img.shields.io/badge/ROS-2-Humble-blue.svg)](https://docs.ros.org/en/humble/index.html)
+[![Nav2](https://img.shields.io/badge/Nav2-Enabled-success.svg)](https://navigation.ros.org/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-orange.svg)](https://releases.ubuntu.com/22.04/)
+[![C++](https://img.shields.io/badge/C%2B%2B-14%2F17-blue.svg)](https://isocpp.org/)
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![Build](https://img.shields.io/badge/Build-Colcon-orange.svg)](https://colcon.readthedocs.io/en/released/)
+[![PCL](https://img.shields.io/badge/PCL-1.12-green.svg)](https://pointclouds.org/)
+[![Open3D](https://img.shields.io/badge/Open3D-0.17.0-blue.svg)](http://www.open3d.org/)
+[![NumPy](https://img.shields.io/badge/NumPy-1.21-blue.svg)](https://numpy.org/)
 
-一个先进的移动机器人自主导航系统，集成了高精度定位与 ROS 2 导航堆栈（Nav2）。
+一个移动机器人自主导航系统，集成了高精度定位与 ROS 2 导航堆栈（Nav2）。
 
 [English](README.md) | [中文](README_CN.md)
 
@@ -22,14 +30,14 @@
 
 ## 概述
 
-ATOM01 导航系统是一个基于 ROS 2 构建的综合性机器人导航解决方案。它结合了基于 3D LiDAR 的 SLAM、UWB 定位和惯性测量，为复杂环境中的机器人提供鲁棒的 3D 定位能力。同时，系统通过适配器将 3D 定位信息转换为 2D 导航所需的格式，与 Nav2 导航堆栈无缝集成，实现了基于 3D 定位和 2D 地图的自主导航功能。
+ATOM01 导航系统是一个基于 ROS 2 构建的综合性机器人导航解决方案。它结合了基于 3D LiDAR 的 SLAM、UWB 定位和惯性测量，为复杂环境中的机器人提供鲁棒的 3D 定位与建图能力。同时，系统通过适配器将 3D 定位信息转换为 2D 导航所需的格式，与 Nav2 导航堆栈无缝集成，实现了基于 3D 定位和 2D 地图的自主导航功能。
 
 **创建者**: Yongqi Zhang
 **联系方式**: 1205041724@qq.com
 
 ## 功能特性
 
-- **高精度定位**：基于 FAST-LIO 2 算法的实时激光雷达-惯性里程计
+- **高精度定位与建图**：基于 FAST-LIO 2 算法的实时 3D 建图与激光雷达-惯性里程计
 - **多传感器融合**：集成 Livox 激光雷达、IMU 和 UWB 定位系统
 - **Nav2 集成**：与 ROS 2 导航堆栈无缝兼容的适配器
 - **实时性能**：针对嵌入式系统和资源受限平台优化
@@ -68,6 +76,7 @@ ATOM01 导航系统是一个基于 ROS 2 构建的综合性机器人导航解决
 
 **主要功能：**
 - 实时激光雷达-惯性里程计（LIO）
+- 3D点云建图
 - 基于 ikd-Tree 的点云管理
 - 全局高程地图生成
 - PCD 地图加载与定位
@@ -76,7 +85,7 @@ ATOM01 导航系统是一个基于 ROS 2 构建的综合性机器人导航解决
 - `robots_localization_node`: 核心定位节点
 
 **话题 (Topics)：**
-- 订阅: `/livox/lidar`, `/livox/imu`, `/nlink_linktrack_nodeframe5` (UWB)
+- 订阅: `/livox/lidar`, `/livox/imu`
 - 发布: `/odometry`, `/current_pose`, `/map`, `/path`
 
 **更多详细信息请参考：** [robots_localization_ros2/README.md](robots_localization_ros2/README.md)
@@ -96,7 +105,7 @@ ATOM01 导航系统是一个基于 ROS 2 构建的综合性机器人导航解决
 
 **话题 (Topics)：**
 - 订阅: `/odometry` (来自 robots_localization)
-- 发布: `/amcl_pose`, TF 变换 (map→odom)
+- 发布: `/pose`, TF 变换 (map→odom)
 
 **更多详细信息请参考：** [nav2_localization_adapter/README_CN.md](nav2_localization_adapter/README_CN.md)
 
@@ -113,12 +122,7 @@ NLink UWB 定位系统接口和消息定义。包含协议解析与串口通信�
 - `linktrack`: LinkTrack UWB 传感器驱动节点
 - `tofsense`: TOFSense 激光测距传感器驱动节点
 
-**话题 (Topics)：**
-- 发布: `/nlink_linktrack_nodeframe0`, `/nlink_linktrack_nodeframe5`, `/nlink_tofsense_frame0`
-
-**更多详细信息请参考：** [nlink_parser_ros2/README.md](nlink_parser_ros2/README.md)
-
-## 前置要求
+### 前置要求
 
 ### 系统要求
 
@@ -137,7 +141,6 @@ NLink UWB 定位系统接口和消息定义。包含协议解析与串口通信�
 
 - [robots_localization_ros2/README.md](robots_localization_ros2/README.md)
 - [nav2_localization_adapter/README_CN.md](nav2_localization_adapter/README_CN.md)
-- [nlink_parser_ros2/README.md](nlink_parser_ros2/README.md)
 
 #### 通用依赖
 
@@ -154,13 +157,13 @@ sudo apt install -y \
     ccache
 ```
 
-#### Python 依赖 (参考 [nav2_localization_adapter/README_CN.md](nav2_localization_adapter/README_CN.md))
+#### Python 依赖
 
 ```bash
-pip install open3d numpy pyyaml
+pip install open3d numpy pyyaml Pillow scipy
 ```
 
-#### 第三方库编译 (参考 [robots_localization_ros2/README.md](robots_localization_ros2/README.md))
+#### 第三方库编译
 
 **Sophus** (推荐 1.22.10)
 ```bash
@@ -212,23 +215,14 @@ cd livox_ros_driver2
 cd ~/
 mkdir -p atom01_ws/src
 cd atom01_ws/src
-git clone --recursive <仓库地址> atom01_navigation
+git clone --recursive https://github.com/Roboparty/atom01_navigation.git
 ```
 
-### 2. 安装依赖
+### 2. 编译工作空间
 
 ```bash
 cd ~/atom01_ws
-rosdep install --from-paths src --ignore-src -r -y
-```
-
-### 3. 编译工作空间
-
-推荐使用 Ninja 编译：
-
-```bash
-cd ~/atom01_ws
-colcon build --symlink-install --cmake-args -G Ninja
+colcon build --symlink-install
 ```
 
 ## 使用方法
@@ -252,7 +246,8 @@ source install/setup.bash
 3. 启动节点：
    ```bash
    # 建图模式
-   ros2 launch robots_localization_ros2 mapping.launch.py
+   # 注：建图和定位使用同一个启动文件，区别在于配置文件中的 mapping_en 参数
+   ros2 launch robots_localization_ros2 localization.launch.py
    
    # 或 定位模式
    ros2 launch robots_localization_ros2 localization.launch.py

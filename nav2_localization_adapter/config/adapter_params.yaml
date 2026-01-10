@@ -11,5 +11,5 @@ nav2_localization_adapter:
     # Publish static map->odom TF at fixed rate (Hz)
     tf_rate_hz: 10.0
 
-    # Whether to publish amcl_pose topic for compatibility
-    publish_amcl_pose: true
+    # Whether to publish pose topic for compatibility
+    publish_pose: true
