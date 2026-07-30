@@ -318,3 +318,10 @@ source install/setup.bash
 ---
 
 **注意**：这是一个活跃开发的项目。功能和 API 可能会发生变化。请查看仓库获取最新更新。
+
+## 许可证
+
+除文件中另有说明外，本仓库直接跟踪且由 RoboParty 有权许可的文件采用
+[GPL-3.0-only](./LICENSE)。Git 子模块和外部依赖保留各自的许可证。
+许可证适用范围及尚未确认的子模块状态见
+[LICENSES.md](./LICENSES.md)。

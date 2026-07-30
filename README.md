@@ -320,3 +320,11 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 ---
 
 **Note**: This is an active development project. Features and APIs may change. Please check the repository for the latest updates.
+
+## License
+
+RoboParty-owned files tracked directly in this repository are licensed under
+[GPL-3.0-only](./LICENSE), unless an individual file states otherwise. Git
+submodules and external dependencies retain their own terms. See
+[LICENSES.md](./LICENSES.md) for the exact scope and unresolved submodule
+licensing status.
